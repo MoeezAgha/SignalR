@@ -1,0 +1,24 @@
+﻿@page "/ss"
+@inject SignalRService SignalRService
+
+
+<h3>Notifications</h3>
+
+<input @bind="user" placeholder="User" />
+<input @bind="message" placeholder="Message" />
+<button @onclick="SendNotification">Send</button>
+
+@code {
+    private string user;
+    private string message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SignalRService.StartAsync();
+    }
+
+    private async Task SendNotification()
+    {
+        await SignalRService.SendNotificationAsync(user, message);
+    }
+}
