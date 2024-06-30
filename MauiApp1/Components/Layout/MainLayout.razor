@@ -58,8 +58,17 @@
                 .WithUrl(Navigation.ToAbsoluteUri($"https://localhost:7148/messageHub?userName={userName}"))
                 .Build();
 
-            hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
+            hubConnection.On<string, string>("ReceiveMessage", async (user, message) =>
             {
+
+                // Display alert
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await Application.Current.MainPage.DisplayAlert("Alert", "You have been alerted", "OK");
+                    string action = await Application.Current.MainPage.DisplayActionSheet("ActionSheet: SavePhoto?", "Cancel", "Delete", "Photo Roll", "Email");
+
+                });
+
                 var encodedMsg = $"{user}: {message}";
                 messages.Add(encodedMsg);
                 InvokeAsync(StateHasChanged);
