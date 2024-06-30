@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace APIApplication.Controllers
 {
@@ -14,11 +16,29 @@ namespace APIApplication.Controllers
             _hubContext = hubContext;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Post([FromBody] MessageDto message)
+        [HttpPost("broadcast")]
+        public async Task<IActionResult> Broadcast([FromBody] MessageDto message)
         {
             await _hubContext.Clients.All.SendAsync("ReceiveMessage", message.User, message.Message);
             return Ok();
+        }
+
+        [HttpPost("sendToUser")]
+        public async Task<IActionResult> SendToUser([FromBody] UserMessageDto message)
+        {
+            var connectionId = MessageHub.GetConnectionId(message.TargetUser);
+            if (connectionId != null)
+            {
+                await _hubContext.Clients.Client(connectionId).SendAsync("ReceiveMessage", message.User, message.Message);
+            }
+            return Ok();
+        }
+
+        [HttpGet("onlineUsers")]
+        public IActionResult GetOnlineUsers()
+        {
+            var onlineUsers = MessageHub.GetOnlineUsers();
+            return Ok(onlineUsers);
         }
     }
 
@@ -28,4 +48,10 @@ namespace APIApplication.Controllers
         public string Message { get; set; }
     }
 
+    public class UserMessageDto
+    {
+        public string User { get; set; }
+        public string Message { get; set; }
+        public string TargetUser { get; set; }
+    }
 }

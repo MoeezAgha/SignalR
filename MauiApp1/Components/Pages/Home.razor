@@ -1,9 +1,12 @@
 ﻿@page "/"
-@using Microsoft.AspNetCore.SignalR.Client
+@* @using Microsoft.AspNetCore.SignalR.Client
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
 
 <h3>Message Client</h3>
+
+<input @bind="userName" placeholder="Enter your name" @oninput="OnUserNameChanged" />
+<p>Connecting as: @userName</p>
 
 <ul id="messagesList">
     @foreach (var message in messages)
@@ -15,11 +18,23 @@
 @code {
     private HubConnection? hubConnection;
     private List<string> messages = new List<string>();
+    private string userName = "1"; // Set a default or get from settings
 
     protected override async Task OnInitializedAsync()
     {
+        await Connect();
+    }
+
+    private async Task Connect()
+    {
+        if (hubConnection != null)
+        {
+            await hubConnection.StopAsync();
+            await hubConnection.DisposeAsync();
+        }
+
         hubConnection = new HubConnectionBuilder()
-            .WithUrl(Navigation.ToAbsoluteUri("https://localhost:7148/messageHub"))
+            .WithUrl(Navigation.ToAbsoluteUri($"https://localhost:7148/messageHub?userName={userName}"))
             .Build();
 
         hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
@@ -32,6 +47,12 @@
         await hubConnection.StartAsync();
     }
 
+    private async Task OnUserNameChanged(ChangeEventArgs e)
+    {
+        userName = e.Value.ToString();
+        await Connect();
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (hubConnection is not null)
@@ -40,3 +61,4 @@
         }
     }
 }
+ *@
